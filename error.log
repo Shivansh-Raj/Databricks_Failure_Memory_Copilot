@@ -1,0 +1,4 @@
+[DBFS_DISABLED] Public DBFS root is disabled. Access is denied on path: /path/that/does/not/exist SQLSTATE: 56038
+File <command-6718598621525998>, line 1
+----> 1 spark.read.csv("/path/that/does/not/exist").show()
+File /databricks/python/lib/python3.12/site-packages/pyspark/sql/connect/client/core.py:2458, in SparkConnectClient._handle_rpc_error(self, rpc_error)
