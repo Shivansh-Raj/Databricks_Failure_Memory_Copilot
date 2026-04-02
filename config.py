@@ -53,3 +53,17 @@ TAIL_LINES: int = 100
 # Logging
 # ---------------------------------------------------------------------------
 LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")   # DEBUG | INFO | WARNING | ERROR
+
+# ---------------------------------------------------------------------------
+# Groq LLM — error normalization
+# ---------------------------------------------------------------------------
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+GROQ_API_KEY: str = os.getenv("GROQ_API_KEY")
+GROQ_MODEL: str = "llama-3.1-8b-instant"         
+GROQ_MODEL_2: str = "llama-3.3-70b-versatile"         
+GROQ_TIMEOUT: int = 60
+GROQ_MAX_TOKENS: int = 800                 

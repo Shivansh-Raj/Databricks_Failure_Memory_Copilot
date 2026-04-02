@@ -34,6 +34,9 @@ from app.matcher import Matcher
 from app.utils import clean_error_text, extract_error_text, format_results
 from config import LOG_LEVEL, MIN_SIMILARITY_THRESHOLD, TOP_N_RESULTS
 
+# Importing Groq Normalizer
+from app.groq_normalizer import normalize
+
 
 def _configure_logging(level: str) -> None:
     logging.basicConfig(
@@ -96,6 +99,19 @@ def _build_arg_parser() -> argparse.ArgumentParser:
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],
         help=f"Log verbosity (default: {LOG_LEVEL}).",
     )
+    parser.add_argument(
+        "--no-groq",
+        action = "store_true",
+        help="Skip Groq normalization and match on raw cleaned error text."
+    )
+    parser.add_argument(
+        "--code-file",
+        help="Path to .py/.scala/.sql file to analyze alongside the error"
+    )
+    parser.add_argument(
+        "--code-text",
+        help="Inline code snippet to analyze alongside the error"
+    )
     return parser
 
 
@@ -148,6 +164,18 @@ def run(args: argparse.Namespace) -> int:
     if not raw_text.strip():
         print("\n[ERROR] No error text could be retrieved. Nothing to match.\n", file=sys.stderr)
         return 1
+    
+    
+    # ------------------------------------------------------------------
+    # Step 1b — after parsing args, resolving the code snippet:
+    # ------------------------------------------------------------------
+    
+    code_snippet = None
+    if args.code_text:
+        code_snippet = args.code_text
+    elif args.code_file:
+        with open(args.code_file, "r") as f:
+            code_snippet = f.read()
 
     # ------------------------------------------------------------------
     # Step 2 — Extract and clean the error fragment
@@ -164,6 +192,16 @@ def run(args: argparse.Namespace) -> int:
         error_text = raw_text.strip()[:2000]   # fallback: use whatever we have
 
     logger.debug("Cleaned error text (%d chars):\n%s", len(error_text), error_text[:300])
+    
+    # ------------------------------------------------------------------
+    # Step 2b — Groq normalization (optional)
+    # ------------------------------------------------------------------
+    normalized = None
+    if not args.no_groq:
+        logger.info("Sending error to Groq for normalization")
+        normalized = normalize(raw_error = error_text, code_snippet = code_snippet)
+        error_text = normalized["error_message"]
+        logger.info("Normalized error: %s", error_text)
 
     # ------------------------------------------------------------------
     # Step 3 — Load knowledge base
@@ -187,7 +225,27 @@ def run(args: argparse.Namespace) -> int:
     # ------------------------------------------------------------------
     # Step 5 — Output
     # ------------------------------------------------------------------
+    if normalized:
+        print(f"\n  Severity : {normalized['severity']}")
+        print(f"  Tags     : {', '.join(normalized['tags']) or 'none'}")
+
+        ctx = normalized.get("code_context")
+        if ctx:
+            print("\n  ── Code analysis ─────────────────────────────")
+            if ctx.get("operation_type"):
+                print(f"  Operation : {ctx['operation_type']}")
+            if ctx.get("apis_used"):
+                print(f"  APIs      : {', '.join(ctx['apis_used'])}")
+            if ctx.get("pattern"):
+                print(f"  Pattern   : {ctx['pattern']}")
+            if ctx.get("likely_hotspot"):
+                print(f"  Hotspot   : {ctx['likely_hotspot']}")
+            if ctx.get("data_scale_hint"):
+                print(f"  Data hint : {ctx['data_scale_hint']}")
+        print()
+        
     print(format_results(results, error_text))
+    
     return 0
 
 
