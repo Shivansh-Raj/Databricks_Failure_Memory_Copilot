@@ -132,6 +132,7 @@ def _preview(record: dict, dry_run: bool) -> None:
     print(f"  Tags       : {', '.join(record.get('tags', [])) or 'none'}")
     print(f"  Error      : {record['error_message'][:120]}")
     print(f"  Resolution : {record['resolution'][:]}")
+    print(f"  Resolution (normalized) : {record['resolution'][:120]}")
 
     ctx = record.get("code_context")
     if ctx:
@@ -181,6 +182,11 @@ def run(args : argparse.Namespace) -> int:
     # ------------------------------------------------------------------
     # Step 3 — Normalize via Groq (or skip)
     # ------------------------------------------------------------------
+    if args.resolution:
+        resolution_text = args.resolution.strip()
+    else:
+        resolution_text = args.resolution_file.read_text().strip()
+        
     if args.no_groq:
         logger.info("Skipping Groq normalization — storing raw text.")
         normalized = {
@@ -194,18 +200,15 @@ def run(args : argparse.Namespace) -> int:
             "Sending to Groq for normalization%s",
             " + code analysis" if code_snippet else "",
         )
-        normalized = normalize(error_text, code_snippet=code_snippet)
+        
+        normalized = normalize(error_text, code_snippet=code_snippet, resolution_text=resolution_text)
         
     # ------------------------------------------------------------------
     # Step 4 — Build the full record
     # ------------------------------------------------------------------
-    if args.resolution:
-        resolution_text = args.resolution.strip()
-    else:
-        resolution_text = args.resolution_file.read_text().strip()
     record = {
         "error_message": normalized["error_message"],
-        "resolution":    resolution_text,
+        "resolution":    normalized["resolution"],
         "tags":          normalized.get("tags", []),
         "severity":      normalized.get("severity", "unknown"),
     }

@@ -145,3 +145,31 @@ class Matcher:
     def vocabulary_size(self) -> int:
         """TF-IDF vocabulary size after fitting."""
         return len(self._vectorizer.vocabulary_)
+
+    def _build_corpus_text(inc: dict[str, Any]) -> str:
+        parts = []
+
+        # error_message — 3x weight (primary match signal)
+        error = inc.get("error_message", "")
+        parts += [error, error, error]
+
+        # resolution — 2x weight (contains fix keywords that reinforce the error type)
+        resolution = inc.get("resolution", "")
+        parts += [resolution, resolution]
+
+        # tags — 3x weight (short categorical labels, very high TF-IDF signal)
+        tags = " ".join(inc.get("tags", []))
+        parts += [tags, tags, tags]
+
+        # code_context fields — 1x weight (structural pattern signal)
+        ctx = inc.get("code_context") or {}
+        if ctx.get("operation_type"):
+            parts.append(ctx["operation_type"])
+        if ctx.get("apis_used"):
+            parts.append(" ".join(ctx["apis_used"]))
+        if ctx.get("pattern"):
+            parts.append(ctx["pattern"])
+        if ctx.get("likely_hotspot"):
+            parts.append(ctx["likely_hotspot"])
+
+        return " ".join(filter(None, parts))

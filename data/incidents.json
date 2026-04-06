@@ -1,6 +1,6 @@
 [
     {
-        "id": null,
+        "id": "INC-001",
         "error_message": "OutOfMemoryError: Java heap space during shuffle",
         "resolution": "Increased executor memory to 16g",
         "tags": [
@@ -18,6 +18,26 @@
             "pattern": "improper shuffle configuration or insufficient resources leading to OOM during data partitioning",
             "data_scale_hint": "large partitioning or aggregation",
             "likely_hotspot": null
+        }
+    },
+    {
+        "id": "INC-002",
+        "error_message": "table not found, invalid reference",
+        "resolution": "Root cause: The Databricks job failure is likely caused by referencing tables that have not been properly defined, which can be due to typos in table names, incorrect syntax when accessing DLT tables, or referencing tables from other pipelines without proper database qualification.\n\nFix: To resolve the issue, verify that all table definitions exist in the notebook before they are referenced, and check for spelling mistakes in table names, noting that DLT is case-sensitive. Additionally, ensure that DLT tables are accessed using the correct syntax, such as dlt.read() or dlt.read_stream().",
+        "tags": [
+            "dlt",
+            "schema",
+            "permissions"
+        ],
+        "severity": "low",
+        "code_context": {
+            "operation_type": "read",
+            "apis_used": [
+                "spark.table()"
+            ],
+            "pattern": "spark.table() used outside a DLT pipeline context, bypassing DLT's dependency graph",
+            "data_scale_hint": null,
+            "likely_hotspot": "spark.table(\"bronze_users\")"
         }
     }
 ]
