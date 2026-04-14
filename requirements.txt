@@ -18,3 +18,10 @@ pytest-cov>=4.1.0
 # Dev / linting (optional)
 # ruff>=0.1.0
 # mypy>=1.5.0
+
+groq>=1.0.0
+
+python-dotenv
+
+# Library to handle SSL Certification Failed Error
+python-certifi-win32

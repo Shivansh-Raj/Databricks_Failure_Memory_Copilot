@@ -1,222 +1,43 @@
 [
     {
         "id": "INC-001",
-        "error_message": "AnalysisException: Resolved attribute(s) revenue#123 missing from schema",
-        "resolution": "Validate schema alignment before Delta merge. Ensure the source DataFrame has the same column names as the target Delta table. Use df.printSchema() and compare with spark.read.format('delta').load(path).schema before the merge operation.",
+        "error_message": "OutOfMemoryError: Java heap space during shuffle",
+        "resolution": "Increased executor memory to 16g",
         "tags": [
-            "delta",
-            "schema",
-            "merge"
+            "oom",
+            "shuffle"
         ],
-        "severity": "high"
+        "severity": "critical",
+        "code_context": {
+            "operation_type": "shuffle",
+            "apis_used": [
+                "sortByKey",
+                "repartition",
+                "coalesce"
+            ],
+            "pattern": "improper shuffle configuration or insufficient resources leading to OOM during data partitioning",
+            "data_scale_hint": "large partitioning or aggregation",
+            "likely_hotspot": null
+        }
     },
     {
         "id": "INC-002",
-        "error_message": "AnalysisException: unresolved column customer_id in the query",
-        "resolution": "Column name mismatch detected. Check if the column was renamed upstream in the pipeline. Use df.columns to inspect available columns and verify the transformation logic. Common cause is a renamed source table column.",
+        "error_message": "table not found, invalid reference",
+        "resolution": "Root cause: The Databricks job failure is likely caused by referencing tables that have not been properly defined, which can be due to typos in table names, incorrect syntax when accessing DLT tables, or referencing tables from other pipelines without proper database qualification.\n\nFix: To resolve the issue, verify that all table definitions exist in the notebook before they are referenced, and check for spelling mistakes in table names, noting that DLT is case-sensitive. Additionally, ensure that DLT tables are accessed using the correct syntax, such as dlt.read() or dlt.read_stream().",
         "tags": [
+            "dlt",
             "schema",
-            "column",
-            "analysis"
-        ],
-        "severity": "medium"
-    },
-    {
-        "id": "INC-003",
-        "error_message": "FileNotFoundException: No such file or directory: dbfs:/mnt/raw/events/2024-01-15",
-        "resolution": "The expected partition path does not exist. Verify the upstream ingestion job completed successfully. Check the job run history for the data producer job. Add a path existence check using dbutils.fs.ls() before reading.",
-        "tags": [
-            "dbfs",
-            "file",
-            "ingestion"
-        ],
-        "severity": "high"
-    },
-    {
-        "id": "INC-004",
-        "error_message": "FileNotFoundException: dbfs:/mnt/bronze/sales not found or no permission",
-        "resolution": "Mount point or DBFS path not accessible. Verify the mount is active with dbutils.fs.mounts(). Re-mount the storage if needed. Check service principal permissions on the underlying storage account.",
-        "tags": [
-            "dbfs",
-            "mount",
             "permissions"
         ],
-        "severity": "high"
-    },
-    {
-        "id": "INC-005",
-        "error_message": "OutOfMemoryError: Java heap space during shuffle stage",
-        "resolution": "Increase driver memory or executor memory in cluster config. Reduce shuffle partitions using spark.conf.set('spark.sql.shuffle.partitions', '200'). Consider repartitioning large DataFrames before joins. Check for data skew using the Spark UI.",
-        "tags": [
-            "oom",
-            "memory",
-            "shuffle"
-        ],
-        "severity": "critical"
-    },
-    {
-        "id": "INC-006",
-        "error_message": "SparkException: Job aborted due to stage failure: Total size of serialized results exceeds spark.driver.maxResultSize",
-        "resolution": "Increase spark.driver.maxResultSize or avoid collecting large results to the driver. Replace df.collect() with df.write() for large datasets. Use df.limit(n) for debugging only.",
-        "tags": [
-            "driver",
-            "memory",
-            "collect"
-        ],
-        "severity": "high"
-    },
-    {
-        "id": "INC-007",
-        "error_message": "ConcurrentModificationException: concurrent update detected on Delta table",
-        "resolution": "Multiple jobs writing to the same Delta table simultaneously. Implement write serialization or use Delta Lake's merge with idempotency keys. Enable optimistic concurrency control and retry logic. Review job scheduling to stagger conflicting writes.",
-        "tags": [
-            "delta",
-            "concurrent",
-            "write"
-        ],
-        "severity": "high"
-    },
-    {
-        "id": "INC-008",
-        "error_message": "ProtocolChangedException: The protocol version of the Delta table has been changed by a concurrent update",
-        "resolution": "Another process upgraded the Delta table protocol. Restart the job after the protocol change completes. Ensure all writers use a compatible Delta Lake version. Avoid mixed Delta Lake versions across clusters.",
-        "tags": [
-            "delta",
-            "protocol",
-            "concurrent"
-        ],
-        "severity": "medium"
-    },
-    {
-        "id": "INC-009",
-        "error_message": "TimeoutException: cluster failed to start within 300 seconds",
-        "resolution": "Cluster startup timeout. Check cloud provider quotas for the instance type. Try a different availability zone or instance type. Review cluster event logs for specific provisioning errors. Consider using a warm pool.",
-        "tags": [
-            "cluster",
-            "timeout",
-            "startup"
-        ],
-        "severity": "high"
-    },
-    {
-        "id": "INC-010",
-        "error_message": "com.databricks.backend.daemon.driver.DriverClient$DriverNotRunningException: Driver is not running",
-        "resolution": "Driver node crashed, likely due to OOM or uncaught exception. Check driver logs for root cause. Increase driver memory. Add try/except around expensive driver-side operations. Review for excessive collect() calls.",
-        "tags": [
-            "driver",
-            "crash",
-            "oom"
-        ],
-        "severity": "critical"
-    },
-    {
-        "id": "INC-011",
-        "error_message": "ParseException: extraneous input 'FROM' expecting EOF near line 3",
-        "resolution": "SQL syntax error in the query. Often caused by a missing semicolon or misplaced keyword. Validate the SQL with spark.sql() interactively in a notebook first. Check for unsupported SQL dialect differences between ANSI and Spark SQL.",
-        "tags": [
-            "sql",
-            "syntax",
-            "parse"
-        ],
-        "severity": "medium"
-    },
-    {
-        "id": "INC-012",
-        "error_message": "org.apache.spark.sql.catalyst.parser.ParseException: mismatched input 'SELECT'",
-        "resolution": "SQL parsing failure. Review the query for unclosed parentheses, mismatched quotes, or reserved keyword conflicts. Use backticks to escape column or table names that conflict with SQL keywords.",
-        "tags": [
-            "sql",
-            "syntax",
-            "parse"
-        ],
-        "severity": "medium"
-    },
-    {
-        "id": "INC-013",
-        "error_message": "IllegalArgumentException: requirement failed: Sampling fraction must be between 0 and 1",
-        "resolution": "Invalid parameter passed to DataFrame.sample(). Ensure the fraction argument is a float between 0.0 and 1.0. Check upstream logic that calculates the sample ratio dynamically — it may produce values outside valid range.",
-        "tags": [
-            "dataframe",
-            "parameter",
-            "sample"
-        ],
-        "severity": "low"
-    },
-    {
-        "id": "INC-014",
-        "error_message": "java.lang.NullPointerException in task serialization",
-        "resolution": "A null value is being serialized in a UDF or map operation. Add null checks inside UDFs using isNotNull() or coalesce(). Use F.when(F.col('x').isNotNull(), ...).otherwise(...) pattern to handle nulls before transformation.",
-        "tags": [
-            "null",
-            "udf",
-            "serialization"
-        ],
-        "severity": "medium"
-    },
-    {
-        "id": "INC-015",
-        "error_message": "Exception: Could not read data from external Hive metastore: Table not found",
-        "resolution": "Table missing from Hive metastore. Verify the database and table name are correct with SHOW TABLES IN database_name. Re-create the table if it was accidentally dropped. Check metastore connectivity from the cluster.",
-        "tags": [
-            "hive",
-            "metastore",
-            "table"
-        ],
-        "severity": "high"
-    },
-    {
-        "id": "INC-016",
-        "error_message": "PERMISSION_DENIED: User does not have access to read secret scope",
-        "resolution": "Secret scope permissions not granted. Run databricks secrets put-acl to grant READ access for the service principal or group. Verify the scope name and key name are correct in the dbutils.secrets.get() call.",
-        "tags": [
-            "secrets",
-            "permissions",
-            "acl"
-        ],
-        "severity": "medium"
-    },
-    {
-        "id": "INC-017",
-        "error_message": "RESOURCE_EXHAUSTED: Rate limit exceeded for API endpoint",
-        "resolution": "Databricks API rate limit hit. Implement exponential backoff with jitter in API calls. Batch API requests where possible. Review job parallelism settings to reduce concurrent API calls. Consider using a token bucket pattern.",
-        "tags": [
-            "api",
-            "rate-limit",
-            "throttling"
-        ],
-        "severity": "medium"
-    },
-    {
-        "id": "INC-018",
-        "error_message": "StreamingQueryException: Stream stopped due to checkpoint metadata corruption",
-        "resolution": "Checkpoint directory is corrupted. Delete the checkpoint path and restart the streaming job from scratch or from a known good offset. Ensure the checkpoint path is on reliable storage (DBFS or cloud storage, not ephemeral local disk).",
-        "tags": [
-            "streaming",
-            "checkpoint",
-            "corruption"
-        ],
-        "severity": "critical"
-    },
-    {
-        "id": "INC-019",
-        "error_message": "KafkaException: Failed to fetch offsets from Kafka topic consumer group lag",
-        "resolution": "Kafka consumer offset issue. Check Kafka broker connectivity from the cluster. Verify topic name and bootstrap server config. Reset consumer group offsets if needed. Increase kafka.max.poll.records for high-throughput topics.",
-        "tags": [
-            "kafka",
-            "streaming",
-            "offset"
-        ],
-        "severity": "high"
-    },
-    {
-        "id": "INC-020",
-        "error_message": "DeltaIllegalStateException: Log file not found, possible corruption in transaction log",
-        "resolution": "Delta transaction log is corrupted or incomplete. Run FSCK REPAIR TABLE to recover. If unrecoverable, restore from the latest VACUUM-safe snapshot. Enable Delta table audit logging to trace what caused the corruption.",
-        "tags": [
-            "delta",
-            "corruption",
-            "transaction-log"
-        ],
-        "severity": "critical"
+        "severity": "low",
+        "code_context": {
+            "operation_type": "read",
+            "apis_used": [
+                "spark.table()"
+            ],
+            "pattern": "spark.table() used outside a DLT pipeline context, bypassing DLT's dependency graph",
+            "data_scale_hint": null,
+            "likely_hotspot": "spark.table(\"bronze_users\")"
+        }
     }
 ]

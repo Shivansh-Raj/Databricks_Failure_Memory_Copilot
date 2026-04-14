@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 # Schema validation
 # ---------------------------------------------------------------------------
 
-REQUIRED_FIELDS = {"error_message", "resolution"}
+REQUIRED_FIELDS = {"id", "error_message", "resolution", "tags", "severity"}
 
 
 def _validate_incident(incident: dict[str, Any], index: int) -> bool:
@@ -34,6 +34,28 @@ def _validate_incident(incident: dict[str, Any], index: int) -> bool:
         return False
     return True
 
+
+# ---------------------------------------------------------------------------
+# Internal Helper
+# ---------------------------------------------------------------------------
+def _load_raw(kb_path: Path) -> list[dict[str, Any]]:
+    """Load the raw JSON array without any validation."""
+    with kb_path.open("r", encoding = "utf-8") as fh:
+        raw = json.load(fh)
+    if not isinstance(raw, list):
+        raise ValueError("incidents.json must contain a JSON array at the top level")
+    return raw    
+    
+def _next_id(incidents: list[dict]) -> str:
+    nums = []
+    for inc in incidents:
+        try:
+            nums.append(int(inc["id"].split("-")[1]))
+        except (KeyError, IndexError, ValueError):
+            pass
+        
+        return f"INC-{(max(nums, default=0) + 1):03d}"
+            
 
 # ---------------------------------------------------------------------------
 # Public API
@@ -69,12 +91,13 @@ def load_incidents(path: Path | str | None = None) -> list[dict[str, Any]]:
             "Create data/incidents.json or pass an explicit path."
         )
 
-    with kb_path.open("r", encoding="utf-8") as fh:
-        raw: list[dict[str, Any]] = json.load(fh)
-
-    if not isinstance(raw, list):
-        raise ValueError("incidents.json must contain a JSON array at the top level.")
-
+    if not kb_path.exists():
+        raise FileNotFoundError(
+            f"Knowledge base not found at {kb_path}."
+            "Create data/incidents.json or pass an explicit path."
+        )
+        
+    raw = _load_raw(kb_path)
     valid = [inc for i, inc in enumerate(raw) if _validate_incident(inc, i)]
 
     if not valid:
@@ -85,43 +108,62 @@ def load_incidents(path: Path | str | None = None) -> list[dict[str, Any]]:
 
 
 def add_incident(
-    error_message: str,
-    resolution: str,
-    extra: dict[str, Any] | None = None,
+    record: dict[str, Any], 
     path: Path | str | None = None,
 ) -> None:
     """
-    Append a new incident to the knowledge base JSON file.
-
-    This is a lightweight helper for the feedback loop (v2).
-    It round-trips the JSON file so manual edits are preserved.
+    Append a new enriched incident to the knowledge base JSON file.
 
     Parameters
     ----------
-    error_message:
-        The cleaned error text.
-    resolution:
-        The human-verified resolution that worked.
-    extra:
-        Optional extra fields (e.g. ``tags``, ``severity``, ``id``).
+    record:
+        Must contain at minimum: error_message, resolution, tags, severity.
+        code_context is optional but included when Groq produced it.
+        id is auto-assigned — any id in the record is ignored.
     path:
         Override the default knowledge-base path.
-    """
+
+    Returns
+    -------
+    str
+        The auto-assigned ID of the new incident (e.g. 'INC-021').
+
+    Raises
+    ------
+    ValueError
+        If the record is missing required fields.
+    """ 
+        
     kb_path = Path(path) if path else KNOWLEDGE_BASE_PATH
 
-    incidents = load_incidents(kb_path) if kb_path.exists() else []
+    # validate before touching the file
+    required = {"error_message", "resolution", "tags", "severity"}
+    missing = required - record.keys()
+    if missing:
+        raise ValueError(f"Incident record is missing required fields: {missing}")
 
+    # load raw so deletions don't corrupt ID sequence
+    existing = _load_raw(kb_path) if kb_path.exists() else []
+
+    new_id = _next_id(existing)
+
+    # build the record in a consistent field order
     new_record: dict[str, Any] = {
-        "id": f"INC-{len(incidents) + 1:03d}",
-        "error_message": error_message.strip(),
-        "resolution": resolution.strip(),
+        "id":            new_id,
+        "error_message": record["error_message"].strip(),
+        "resolution":    record["resolution"].strip(),
+        "tags":          record["tags"],
+        "severity":      record["severity"],
     }
-    if extra:
-        new_record.update(extra)
 
-    incidents.append(new_record)
+    # include code_context only if present and non-null
+    if record.get("code_context"):
+        new_record["code_context"] = record["code_context"]
+
+    existing.append(new_record)
 
     with kb_path.open("w", encoding="utf-8") as fh:
-        json.dump(incidents, fh, indent=2, ensure_ascii=False)
+        json.dump(existing, fh, indent=4, ensure_ascii=False)
 
-    logger.info("Added new incident '%s' to %s.", new_record["id"], kb_path)
+    logger.info("Added incident '%s' to %s.", new_id, kb_path)
+    return new_id

@@ -1,0 +1,9 @@
+Common causes include:
+
+Referencing a table that hasn't been defined yet in the notebook
+Typos in table names that don't match the actual table definition
+Using incorrect syntax to reference DLT tables (should use dlt.read() or dlt.read_stream())
+Attempting to reference tables from different pipelines without proper database qualification
+
+
+The solution depends on the specific cause. Verify table definitions exist in your notebook before they’re referenced. Check for spelling mistakes in table names—DLT is case-sensitive. Ensure you’re using the correct syntax:
