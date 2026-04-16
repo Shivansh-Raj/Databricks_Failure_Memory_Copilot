@@ -25,3 +25,5 @@ python-dotenv
 
 # Library to handle SSL Certification Failed Error
 python-certifi-win32
+
+langgraph

@@ -212,11 +212,11 @@ def normalize_error(error_text: str) -> str:
     
     except json.JSONDecodeError as e:
         logger.warning("Groq returned invalid JSON: %s — falling back to raw text.", e)
-        return _fallback(raw_error)
+        return _fallback(error_text)
 
     except Exception as e:
         logger.warning("Groq API call failed: %s — falling back to raw text.", e)
-        return _fallback(raw_error)
+        return _fallback(error_text)
     
 def analyze_code(error_message: str, code_snippet: str) -> dict:
     """ 
@@ -272,36 +272,41 @@ def normalize_resolution(resolution_text: str) -> str:
         logger.warning("Groq resolution normalization failed: %s — using raw text.", e)
         return resolution_text.strip()        
 
+"""
+NOTE: The normalize() orchestrator has been removed.
+Orchestration is now handled by app/graph.py via LangGraph.
+The three functions above are called directly by graph nodes.
+"""
 
-def normalize(
-        raw_error: str, 
-        code_snippet : str | None = None,
-        resolution_text : str | None = None
-    ) -> dict:
-    """
-    Public entry point. Orchestrates both calls and returns a merged dict.
+# def normalize(
+#         raw_error: str, 
+#         code_snippet : str | None = None,
+#         resolution_text : str | None = None
+#     ) -> dict:
+#     """
+#     Public entry point. Orchestrates both calls and returns a merged dict.
 
-    Always makes Call 1.
-    Only makes Call 2 if code_snippet is provided.
+#     Always makes Call 1.
+#     Only makes Call 2 if code_snippet is provided.
 
-    Returns
-    -------
-    dict with keys: error_message, tags, severity, code_context
-    """
-    # Call 1 - always
-    result = normalize_error(raw_error)
+#     Returns
+#     -------
+#     dict with keys: error_message, tags, severity, code_context
+#     """
+#     # Call 1 - always
+#     result = normalize_error(raw_error)
     
-    # Call 2 - only if code was provided
-    if code_snippet:
-        result["code_context"] = analyze_code(
-            error_message=result["error_message"],
-            code_snippet=code_snippet
-        )
-    else:
-        result["code_context"] = None 
+#     # Call 2 - only if code was provided
+#     if code_snippet:
+#         result["code_context"] = analyze_code(
+#             error_message=result["error_message"],
+#             code_snippet=code_snippet
+#         )
+#     else:
+#         result["code_context"] = None 
 
-    # Call 3 — only if resolution was provided (add_incident flow)
-    if resolution_text:
-        result["resolution"] = normalize_resolution(resolution_text)
+#     # Call 3 — only if resolution was provided (add_incident flow)
+#     if resolution_text:
+#         result["resolution"] = normalize_resolution(resolution_text)
 
-    return result
+#     return result

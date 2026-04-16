@@ -119,7 +119,12 @@ def clean_error_text(text: str) -> str:
 _SEPARATOR = "─" * 60
 
 
-def format_results(results: list[dict[str, Any]], query_text: str) -> str:
+def format_results(
+    results: list[dict[str, Any]],
+    query_text: str,
+    confidence: str = "high",
+    final_resolution: str | None = None,
+) -> str:
     """
     Render the top-N match results as a human-readable string.
 
@@ -129,6 +134,10 @@ def format_results(results: list[dict[str, Any]], query_text: str) -> str:
         Output of ``Matcher.find_matches()``.
     query_text:
         The cleaned error text that was queried (shown in the header).
+    confidence:
+        "high" or "low" — from match_decider node.
+    final_resolution:
+        Groq-generated suggestion when confidence is low.
 
     Returns
     -------
@@ -140,23 +149,32 @@ def format_results(results: list[dict[str, Any]], query_text: str) -> str:
     lines.append("  DATABRICKS FAILURE MEMORY COPILOT — Results")
     lines.append(_SEPARATOR)
 
-    # Show a brief excerpt of what was queried
     excerpt = textwrap.shorten(query_text, width=120, placeholder=" …")
     lines.append(f"\n  Query error:\n  {excerpt}\n")
     lines.append(_SEPARATOR)
 
-    if not results:
-        lines.append("\n  ⚠  No sufficiently similar historical incidents found.")
-        lines.append("  Consider adding this failure to the knowledge base.\n")
-        lines.append(_SEPARATOR)
+    # ------------------------------------------------------------------
+    # Low confidence path — show Groq suggestion instead of match results
+    # ------------------------------------------------------------------
+    if confidence == "low" or not results:
+        lines.append("\n  ⚠  No strong match found in knowledge base.")
+        if final_resolution:
+            lines.append("\n  ── Groq-Generated Suggestion ──────────────────────")
+            lines.append(f"\n{textwrap.indent(textwrap.fill(final_resolution, width=72), '    ')}")
+        else:
+            lines.append("  Consider adding this failure to the knowledge base.")
+        lines.append(f"\n{_SEPARATOR}")
         return "\n".join(lines)
 
+    # ------------------------------------------------------------------
+    # High confidence path — show ranked match results
+    # ------------------------------------------------------------------
     for rank, match in enumerate(results, start=1):
         score_pct = match["score"] * 100
-        confidence = _confidence_label(match["score"])
+        confidence_label = _confidence_label(match["score"])
         inc = match["incident"]
 
-        lines.append(f"\n  #{rank}  [{confidence}]  Similarity: {score_pct:.1f}%")
+        lines.append(f"\n  #{rank}  [{confidence_label}]  Similarity: {score_pct:.1f}%")
         lines.append(f"  ID: {inc.get('id', 'N/A')}")
         lines.append(f"  Matched error:\n    {textwrap.shorten(inc['error_message'], 100, placeholder=' …')}")
         lines.append(f"\n  Resolution:\n{textwrap.indent(textwrap.fill(inc['resolution'], width=72), '    ')}")
@@ -165,7 +183,6 @@ def format_results(results: list[dict[str, Any]], query_text: str) -> str:
         lines.append(f"\n{_SEPARATOR}")
 
     return "\n".join(lines)
-
 
 def _confidence_label(score: float) -> str:
     """Map a cosine similarity score to a human-readable confidence label."""

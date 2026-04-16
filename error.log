@@ -1,1 +1,1 @@
-“Table or view not found” errors indicate DLT cannot locate a referenced table. This manifests with messages like Table or view 'table_name' not found or Cannot resolve 'table_name'.
+OutOfMemoryError: Java heap space during shuffle

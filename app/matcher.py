@@ -60,7 +60,7 @@ class Matcher:
             token_pattern=r"(?u)\b\w+\b",   # include single-char tokens (e.g. 'e' in 'e.g.')
         )
 
-        corpus = [inc["error_message"] for inc in incidents]
+        corpus = [self._build_corpus_text(inc) for inc in incidents]
         self._corpus_matrix = self._vectorizer.fit_transform(corpus)
 
         logger.info(
@@ -78,6 +78,8 @@ class Matcher:
         query: str,
         top_n: int = TOP_N_RESULTS,
         threshold: float = MIN_SIMILARITY_THRESHOLD,
+        tags: list[str] | None = None,
+        code_context: dict | None = None,
     ) -> list[dict[str, Any]]:
         """
         Find the most similar historical incidents for a given error string.
@@ -90,6 +92,10 @@ class Matcher:
             Maximum number of results to return.
         threshold:
             Minimum cosine similarity score to include a result.
+        tags:
+            Optional list of tags from Groq normalization — boosts categorical matching.
+        code_context:
+            Optional code_context dict from Groq — boosts structural pattern matching.
 
         Returns
         -------
@@ -103,7 +109,25 @@ class Matcher:
             logger.warning("Empty query passed to find_matches — returning no results.")
             return []
 
-        query_vec = self._vectorizer.transform([query])
+        query_parts = [query, query, query]
+        
+        if tags:
+            tags_str = " ".join(tags)
+            query_parts += [tags_str, tags_str, tags_str]
+        
+        if code_context:
+            if code_context.get("operation_type"):
+                query_parts.append(code_context["operation_type"])
+            if code_context.get("apis_used"):
+                query_parts.append(" ".join(code_context["apis_used"]))
+            if code_context.get("pattern"):
+                query_parts.append(code_context["pattern"])
+            if code_context.get("likely_hotspot"):
+                query_parts.append(code_context["likely_hotspot"])
+        
+        enriched_query = " ".join(filter(None, query_parts))
+        query_vec = self._vectorizer.transform([enriched_query])
+            
         scores: np.ndarray = cosine_similarity(query_vec, self._corpus_matrix).flatten()
 
         # Get indices sorted by score descending
@@ -146,7 +170,7 @@ class Matcher:
         """TF-IDF vocabulary size after fitting."""
         return len(self._vectorizer.vocabulary_)
 
-    def _build_corpus_text(inc: dict[str, Any]) -> str:
+    def _build_corpus_text(self, inc: dict[str, Any]) -> str:
         parts = []
 
         # error_message — 3x weight (primary match signal)
@@ -154,8 +178,8 @@ class Matcher:
         parts += [error, error, error]
 
         # resolution — 2x weight (contains fix keywords that reinforce the error type)
-        resolution = inc.get("resolution", "")
-        parts += [resolution, resolution]
+        # resolution = inc.get("resolution", "")
+        # parts += [resolution, resolution]
 
         # tags — 3x weight (short categorical labels, very high TF-IDF signal)
         tags = " ".join(inc.get("tags", []))

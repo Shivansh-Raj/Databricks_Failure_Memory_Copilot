@@ -39,5 +39,66 @@
             "data_scale_hint": null,
             "likely_hotspot": "spark.table(\"bronze_users\")"
         }
+    },
+    {
+        "id": "INC-002",
+        "error_message": "java.lang.OutOfMemoryError: Java heap space",
+        "resolution": "Root cause: The Databricks job failure occurs due to referencing a table that hasn't been defined yet in the notebook, typos in table names that don't match the actual table definition, or using incorrect syntax to reference DLT tables, specifically using incorrect methods for referencing such tables or failing to properly qualify tables from different pipelines.\n\nFix: To resolve the issue, verify that table definitions exist in the notebook before they are referenced, check for spelling mistakes in table names as DLT is case-sensitive, and ensure the correct syntax is used by using methods such as dlt.read() or dlt.read_stream() to reference DLT tables and properly qualify tables from different pipelines.",
+        "tags": [
+            "oom",
+            "memory",
+            "shuffle"
+        ],
+        "severity": "critical"
+    },
+    {
+        "id": "INC-002",
+        "error_message": "OutOfMemoryError: Java heap space",
+        "resolution": "Root cause: The Databricks job failure occurs due to referencing a table that hasn't been defined yet in the notebook, typos in table names that don't match the actual table definition, using incorrect syntax to reference DLT tables by not utilizing dlt.read() or dlt.read_stream(), or attempting to reference tables from different pipelines without proper database qualification.\n\nFix: To resolve the issue, verify table definitions exist in your notebook before they're referenced, check for spelling mistakes in table names as DLT is case-sensitive and ensure you're using the correct syntax for referencing DLT tables by using dlt.read() or dlt.read_stream(), and if necessary, properly qualify database names when referencing tables from different pipelines.",
+        "tags": [
+            "oom",
+            "shuffle"
+        ],
+        "severity": "high"
+    },
+    {
+        "id": "INC-002",
+        "error_message": "java.lang.OutOfMemoryError: Java heap space",
+        "resolution": "Root cause: Referencing a table that hasn't been defined yet in the notebook or using tables that don't match due to typos in table names, incorrect DLT table syntax, or unqualified tables from different pipelines.\n\nFix: Verify table definitions exist in the notebook before they are referenced, check for spelling mistakes in table names as DLT is case-sensitive, ensure using the correct DLT table reading syntax by using functions like dlt.read() or dlt.read_stream(), and properly qualify database names for cross-pipeline table references.",
+        "tags": [
+            "oom",
+            "shuffle"
+        ],
+        "severity": "high"
+    },
+    {
+        "id": "INC-002",
+        "error_message": "outofmemoryerror java heap space:shuffle failed",
+        "resolution": "Root cause: The job failure is triggered by referencing uncreated tables in the notebook, utilizing incorrect syntax for accessing DLT tables, or attempting to access tables from another pipeline without proper qualification.\n\nFix: Verify the table definitions exist in the notebook before they are referenced to avoid referencing uncreated tables, and check for spelling mistakes in table names considering that DLT is case-sensitive; ensure to utilize the correct syntax such as dlt.read() for accessing DLT tables for a correct resolution.",
+        "tags": [
+            "oom",
+            "shuffle"
+        ],
+        "severity": "critical"
+    },
+    {
+        "id": "INC-002",
+        "error_message": "java.lang.OutOfMemoryError: Java heap space during shuffle",
+        "resolution": "Root cause: Referencing a table that hasn't been defined yet in the notebook, typos in table names that don't match the actual table definition, incorrect syntax to reference DLT tables, or referencing tables from different pipelines without proper database qualification can cause a failure in a Databricks job.\n\nFix: To resolve this issue, verify that table definitions exist in your notebook before they are referenced, check for spelling mistakes in table names as DLT is case-sensitive, and ensure the correct syntax is used to reference DLT tables, which should be done using dlt.read() or dlt.read_stream(), or properly qualify tables from different pipelines with their respective database names.",
+        "tags": [
+            "oom",
+            "shuffle"
+        ],
+        "severity": "critical"
+    },
+    {
+        "id": "INC-002",
+        "error_message": "java.outofmemoryerror.shuffle",
+        "resolution": "Root cause: The failure may be due to referencing an unresolved table in the notebook or using incorrect syntax to reference DLT tables, potentially leading to issues with table definitions or improper database qualifications.\n\nFix: Verify the existence of table definitions in the notebook before they are referenced, and check for spelling mistakes or inconsistent case usage in table names, using correct syntax for referencing DLT tables by utilizing dlt.read() or dlt.read_stream() when applicable, and ensuring proper database qualification for cross-pipeline references.",
+        "tags": [
+            "oom",
+            "shuffle"
+        ],
+        "severity": "critical"
     }
 ]

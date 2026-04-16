@@ -35,7 +35,9 @@ from app.utils import clean_error_text, extract_error_text, format_results
 from config import LOG_LEVEL, MIN_SIMILARITY_THRESHOLD, TOP_N_RESULTS
 
 # Importing Groq Normalizer
-from app.groq_normalizer import normalize
+# from app.groq_normalizer import normalize
+
+from app.graph import run_pipeline
 
 
 def _configure_logging(level: str) -> None:
@@ -193,14 +195,20 @@ def run(args: argparse.Namespace) -> int:
 
     logger.debug("Cleaned error text (%d chars):\n%s", len(error_text), error_text[:300])
     
+# ------------------------------------------------------------------
+    # Step 2b — Run LangGraph pipeline (optional)
     # ------------------------------------------------------------------
-    # Step 2b — Groq normalization (optional)
-    # ------------------------------------------------------------------
-    normalized = None
+    state = None
     if not args.no_groq:
-        logger.info("Sending error to Groq for normalization")
-        normalized = normalize(raw_error = error_text, code_snippet = code_snippet)
-        error_text = normalized["error_message"]
+        logger.info(
+            "Running pipeline%s",
+            " + code analysis" if code_snippet else "",
+        )
+        state = run_pipeline(
+            raw_error=error_text,
+            raw_code=code_snippet,
+        )
+        error_text = state["error_message"]
         logger.info("Normalized error: %s", error_text)
 
     # ------------------------------------------------------------------
@@ -213,23 +221,28 @@ def run(args: argparse.Namespace) -> int:
         return 1
 
     # ------------------------------------------------------------------
-    # Step 4 — Match
+    # Step 4 — Match (skipped if graph already matched)
     # ------------------------------------------------------------------
-    matcher = Matcher(incidents)
-    results = matcher.find_matches(
-        query=error_text,
-        top_n=args.top_n,
-        threshold=args.threshold,
-    )
+    if state:
+        # graph already ran match_node internally — read directly from state
+        results = state.get("match_results") or []
+    else:
+        # --no-groq path — run matcher standalone
+        matcher = Matcher(incidents)
+        results = matcher.find_matches(
+            query=error_text,
+            top_n=args.top_n,
+            threshold=args.threshold,
+        )
 
     # ------------------------------------------------------------------
     # Step 5 — Output
     # ------------------------------------------------------------------
-    if normalized:
-        print(f"\n  Severity : {normalized['severity']}")
-        print(f"  Tags     : {', '.join(normalized['tags']) or 'none'}")
+    if state:
+        print(f"\n  Severity : {state['severity']}")
+        print(f"  Tags     : {', '.join(state['tags']) if state['tags'] else 'none'}")
 
-        ctx = normalized.get("code_context")
+        ctx = state.get("code_context")
         if ctx:
             print("\n  ── Code analysis ─────────────────────────────")
             if ctx.get("operation_type"):
@@ -243,9 +256,14 @@ def run(args: argparse.Namespace) -> int:
             if ctx.get("data_scale_hint"):
                 print(f"  Data hint : {ctx['data_scale_hint']}")
         print()
-        
-    print(format_results(results, error_text))
-    
+
+    print(format_results(
+        results=results,
+        query_text=error_text,
+        confidence=state.get("confidence", "high") if state else "high",
+        final_resolution=state.get("final_resolution") if state else None,
+    ))
+
     return 0
 
 
