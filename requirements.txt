@@ -26,4 +26,7 @@ python-dotenv
 # Library to handle SSL Certification Failed Error
 python-certifi-win32
 
+# Libraries required to create a rag app
+chromadb
+sentence-transformers
 langgraph

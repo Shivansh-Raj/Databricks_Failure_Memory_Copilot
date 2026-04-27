@@ -1,104 +1,170 @@
 [
-    {
-        "id": "INC-001",
-        "error_message": "OutOfMemoryError: Java heap space during shuffle",
-        "resolution": "Increased executor memory to 16g",
-        "tags": [
-            "oom",
-            "shuffle"
-        ],
-        "severity": "critical",
-        "code_context": {
-            "operation_type": "shuffle",
-            "apis_used": [
-                "sortByKey",
-                "repartition",
-                "coalesce"
-            ],
-            "pattern": "improper shuffle configuration or insufficient resources leading to OOM during data partitioning",
-            "data_scale_hint": "large partitioning or aggregation",
-            "likely_hotspot": null
-        }
-    },
-    {
-        "id": "INC-002",
-        "error_message": "table not found, invalid reference",
-        "resolution": "Root cause: The Databricks job failure is likely caused by referencing tables that have not been properly defined, which can be due to typos in table names, incorrect syntax when accessing DLT tables, or referencing tables from other pipelines without proper database qualification.\n\nFix: To resolve the issue, verify that all table definitions exist in the notebook before they are referenced, and check for spelling mistakes in table names, noting that DLT is case-sensitive. Additionally, ensure that DLT tables are accessed using the correct syntax, such as dlt.read() or dlt.read_stream().",
-        "tags": [
-            "dlt",
-            "schema",
-            "permissions"
-        ],
-        "severity": "low",
-        "code_context": {
-            "operation_type": "read",
-            "apis_used": [
-                "spark.table()"
-            ],
-            "pattern": "spark.table() used outside a DLT pipeline context, bypassing DLT's dependency graph",
-            "data_scale_hint": null,
-            "likely_hotspot": "spark.table(\"bronze_users\")"
-        }
-    },
-    {
-        "id": "INC-002",
-        "error_message": "java.lang.OutOfMemoryError: Java heap space",
-        "resolution": "Root cause: The Databricks job failure occurs due to referencing a table that hasn't been defined yet in the notebook, typos in table names that don't match the actual table definition, or using incorrect syntax to reference DLT tables, specifically using incorrect methods for referencing such tables or failing to properly qualify tables from different pipelines.\n\nFix: To resolve the issue, verify that table definitions exist in the notebook before they are referenced, check for spelling mistakes in table names as DLT is case-sensitive, and ensure the correct syntax is used by using methods such as dlt.read() or dlt.read_stream() to reference DLT tables and properly qualify tables from different pipelines.",
-        "tags": [
-            "oom",
-            "memory",
-            "shuffle"
-        ],
-        "severity": "critical"
-    },
-    {
-        "id": "INC-002",
-        "error_message": "OutOfMemoryError: Java heap space",
-        "resolution": "Root cause: The Databricks job failure occurs due to referencing a table that hasn't been defined yet in the notebook, typos in table names that don't match the actual table definition, using incorrect syntax to reference DLT tables by not utilizing dlt.read() or dlt.read_stream(), or attempting to reference tables from different pipelines without proper database qualification.\n\nFix: To resolve the issue, verify table definitions exist in your notebook before they're referenced, check for spelling mistakes in table names as DLT is case-sensitive and ensure you're using the correct syntax for referencing DLT tables by using dlt.read() or dlt.read_stream(), and if necessary, properly qualify database names when referencing tables from different pipelines.",
-        "tags": [
-            "oom",
-            "shuffle"
-        ],
-        "severity": "high"
-    },
-    {
-        "id": "INC-002",
-        "error_message": "java.lang.OutOfMemoryError: Java heap space",
-        "resolution": "Root cause: Referencing a table that hasn't been defined yet in the notebook or using tables that don't match due to typos in table names, incorrect DLT table syntax, or unqualified tables from different pipelines.\n\nFix: Verify table definitions exist in the notebook before they are referenced, check for spelling mistakes in table names as DLT is case-sensitive, ensure using the correct DLT table reading syntax by using functions like dlt.read() or dlt.read_stream(), and properly qualify database names for cross-pipeline table references.",
-        "tags": [
-            "oom",
-            "shuffle"
-        ],
-        "severity": "high"
-    },
-    {
-        "id": "INC-002",
-        "error_message": "outofmemoryerror java heap space:shuffle failed",
-        "resolution": "Root cause: The job failure is triggered by referencing uncreated tables in the notebook, utilizing incorrect syntax for accessing DLT tables, or attempting to access tables from another pipeline without proper qualification.\n\nFix: Verify the table definitions exist in the notebook before they are referenced to avoid referencing uncreated tables, and check for spelling mistakes in table names considering that DLT is case-sensitive; ensure to utilize the correct syntax such as dlt.read() for accessing DLT tables for a correct resolution.",
-        "tags": [
-            "oom",
-            "shuffle"
-        ],
-        "severity": "critical"
-    },
-    {
-        "id": "INC-002",
-        "error_message": "java.lang.OutOfMemoryError: Java heap space during shuffle",
-        "resolution": "Root cause: Referencing a table that hasn't been defined yet in the notebook, typos in table names that don't match the actual table definition, incorrect syntax to reference DLT tables, or referencing tables from different pipelines without proper database qualification can cause a failure in a Databricks job.\n\nFix: To resolve this issue, verify that table definitions exist in your notebook before they are referenced, check for spelling mistakes in table names as DLT is case-sensitive, and ensure the correct syntax is used to reference DLT tables, which should be done using dlt.read() or dlt.read_stream(), or properly qualify tables from different pipelines with their respective database names.",
-        "tags": [
-            "oom",
-            "shuffle"
-        ],
-        "severity": "critical"
-    },
-    {
-        "id": "INC-002",
-        "error_message": "java.outofmemoryerror.shuffle",
-        "resolution": "Root cause: The failure may be due to referencing an unresolved table in the notebook or using incorrect syntax to reference DLT tables, potentially leading to issues with table definitions or improper database qualifications.\n\nFix: Verify the existence of table definitions in the notebook before they are referenced, and check for spelling mistakes or inconsistent case usage in table names, using correct syntax for referencing DLT tables by utilizing dlt.read() or dlt.read_stream() when applicable, and ensuring proper database qualification for cross-pipeline references.",
-        "tags": [
-            "oom",
-            "shuffle"
-        ],
-        "severity": "critical"
+  {
+    "id": "INC-001",
+    "error_message": "OutOfMemoryError: Java heap space during shuffle",
+    "resolution": "Increased executor memory to 16g",
+    "tags": ["oom", "shuffle"],
+    "severity": "critical",
+    "code_context": {
+      "operation_type": "shuffle",
+      "apis_used": ["sortByKey", "repartition", "coalesce"],
+      "pattern": "improper shuffle configuration or insufficient resources leading to OOM during data partitioning",
+      "data_scale_hint": "large partitioning or aggregation",
+      "likely_hotspot": null
     }
+  },
+  {
+    "id": "INC-002",
+    "error_message": "table not found, invalid reference",
+    "resolution": "Root cause: The Databricks job failure is likely caused by referencing tables that have not been properly defined, which can be due to typos in table names, incorrect syntax when accessing DLT tables, or referencing tables from other pipelines without proper database qualification.\n\nFix: To resolve the issue, verify that all table definitions exist in the notebook before they are referenced, and check for spelling mistakes in table names, noting that DLT is case-sensitive. Additionally, ensure that DLT tables are accessed using the correct syntax, such as dlt.read() or dlt.read_stream().",
+    "tags": ["dlt", "schema", "permissions"],
+    "severity": "low",
+    "code_context": {
+      "operation_type": "read",
+      "apis_used": ["spark.table()"],
+      "pattern": "spark.table() used outside a DLT pipeline context, bypassing DLT's dependency graph",
+      "data_scale_hint": null,
+      "likely_hotspot": "spark.table(\"bronze_users\")"
+    }
+  },
+  {
+    "id": "INC-003",
+    "error_message": "Circular dependency detected / Table dependency graph contains a cycle",
+    "resolution": "Restructure the pipeline logic to ensure data flow moves in a single direction, such as bronze → silver → gold. This often involves introducing an intermediate table or rethinking the dependency loop where tables reference each other.",
+    "tags": ["dlt", "dependency", "graph"],
+    "severity": "high",
+    "code_context": {
+      "operation_type": "graph_construction",
+      "apis_used": ["dlt.read()"],
+      "pattern": "Table A references Table B while Table B simultaneously references Table A, creating an impossible execution order.",
+      "data_scale_hint": "logic-based failure",
+      "likely_hotspot": "@dlt.table(name='table_a') def table_a(): return dlt.read('table_b')"
+    }
+  },
+  {
+    "id": "INC-004",
+    "error_message": "can't batch-read streaming table / mode mismatch",
+    "resolution": "Ensure that the reading mode matches the source table's mode; if a table is defined using readStream, downstream consumers must use dlt.read_stream().",
+    "tags": ["dlt", "streaming", "batch"],
+    "severity": "medium",
+    "code_context": {
+      "operation_type": "read",
+      "apis_used": ["dlt.read()", "dlt.read_stream()"],
+      "pattern": "Attempting to use a batch read (dlt.read) on a table defined as a streaming source.",
+      "data_scale_hint": "streaming pipelines",
+      "likely_hotspot": "dlt.read('streaming_source')"
+    }
+  },
+  {
+    "id": "INC-005",
+    "error_message": "Cannot cast StringType to IntegerType / Failed to cast value",
+    "resolution": "Implement defensive casting using when().otherwise() logic to provide a fallback value (like 0.0 or null) when a cast fails, preventing the entire pipeline from crashing.",
+    "tags": ["schema", "casting", "data-quality"],
+    "severity": "medium",
+    "code_context": {
+      "operation_type": "transformation",
+      "apis_used": ["cast()", "when()", "otherwise()"],
+      "pattern": "Source data contains unexpected non-numeric characters in a column expected to be an integer or double.",
+      "data_scale_hint": "unstructured or dirty source data",
+      "likely_hotspot": "col('amount').cast('double')"
+    }
+  },
+  {
+    "id": "INC-006",
+    "error_message": "cannot resolve 'column_name' / Column does not exist",
+    "resolution": "Handle potentially missing columns gracefully by using conditional Python logic to check if a column exists in the dataframe before attempting to select it.",
+    "tags": ["schema", "evolution", "missing-column"],
+    "severity": "low",
+    "code_context": {
+      "operation_type": "select",
+      "apis_used": ["df.columns", "lit(None)"],
+      "pattern": "A hardcoded selection of a column that was removed or renamed in the upstream source.",
+      "data_scale_hint": "evolving schemas",
+      "likely_hotspot": "if 'optional_column' in df.columns:"
+    }
+  },
+  {
+    "id": "INC-007",
+    "error_message": "Expectation 'name' failed with violations exceeding threshold",
+    "resolution": "Investigate violation patterns by creating a temporary debug table that filters for records failing the constraint. Based on the results, either fix the upstream data or relax the expectation if it is too strict for legitimate edge cases.",
+    "tags": ["dlt", "expectations", "data-quality"],
+    "severity": "high",
+    "code_context": {
+      "operation_type": "quality_check",
+      "apis_used": ["@dlt.expect_or_fail()", "rlike()"],
+      "pattern": "Data quality has degraded upstream or new data patterns emerged that violate the 'expect_or_fail' constraint.",
+      "data_scale_hint": "production data streams",
+      "likely_hotspot": "@dlt.expect_or_fail('valid_email', 'email RLIKE ...')"
+    }
+  },
+  {
+    "id": "INC-008",
+    "error_message": "Silent data loss / High dropped record count",
+    "resolution": "Query the DLT event_log table to monitor dropped_records metrics. If drop rates are too high, adjust the 'expect_or_drop' constraints to balance quality with data retention.",
+    "tags": ["dlt", "metrics", "data-loss"],
+    "severity": "medium",
+    "code_context": {
+      "operation_type": "quality_check",
+      "apis_used": ["@dlt.expect_or_drop()", "event_log()"],
+      "pattern": "Strict expectations are discarding a significant portion of data without failing the pipeline, leading to incomplete downstream tables.",
+      "data_scale_hint": "large datasets with varied quality",
+      "likely_hotspot": "SUM(details:flow_progress.data_quality.expectations.dropped_records)"
+    }
+  },
+  {
+    "id": "INC-009",
+    "error_message": "Unexpected filter behavior with null values",
+    "resolution": "Always explicitly test for NULL in filters and expectations (e.g., 'amount IS NOT NULL AND amount > 0') because Spark's three-valued logic may treat nulls as neither true nor false.",
+    "tags": ["spark-sql", "null-handling", "logic"],
+    "severity": "low",
+    "code_context": {
+      "operation_type": "filter",
+      "apis_used": ["isNotNull()", "filter()"],
+      "pattern": "Assuming a standard comparison (e.g., > 0) will correctly handle or exclude null values.",
+      "data_scale_hint": "data with missing values",
+      "likely_hotspot": "filter(col('amount') > 0)"
+    }
+  },
+  {
+    "id": "INC-010",
+    "error_message": "java.lang.OutOfMemoryError: Java heap space / Driver OOM",
+    "resolution": "Avoid operations that pull data to the driver node, such as .collect() or .toPandas(), and instead use distributed operations like .repartition() to spread memory load.",
+    "tags": ["oom", "performance", "resource-management"],
+    "severity": "critical",
+    "code_context": {
+      "operation_type": "collect",
+      "apis_used": ["collect()", "toPandas()", "show()"],
+      "pattern": "Attempting to bring a large distributed dataset into the local memory of the driver node.",
+      "data_scale_hint": "large-scale datasets",
+      "likely_hotspot": "records = df.collect()"
+    }
+  },
+  {
+    "id": "INC-011",
+    "error_message": "Streaming state growth / State-related OOM",
+    "resolution": "Implement watermarking using .withWatermark() to define how long the engine should retain state for late-arriving data in windowed aggregations.",
+    "tags": ["streaming", "state", "watermark"],
+    "severity": "high",
+    "code_context": {
+      "operation_type": "aggregation",
+      "apis_used": ["withWatermark()", "window()"],
+      "pattern": "Unbounded state growth in streaming aggregations where the system never discards old data.",
+      "data_scale_hint": "long-running stateful streams",
+      "likely_hotspot": ".withWatermark('event_time', '1 hour')"
+    }
+  },
+  {
+    "id": "INC-012",
+    "error_message": "Unable to read checkpoint / Checkpoint directory is corrupted",
+    "resolution": "Stop the pipeline, delete the specific checkpoint directory located at {storage_location}/system/checkpoints/{table_name}, and restart the pipeline to reprocess the data.",
+    "tags": ["streaming", "checkpoint", "recovery"],
+    "severity": "high",
+    "code_context": {
+      "operation_type": "streaming_recovery",
+      "apis_used": ["N/A"],
+      "pattern": "Streaming state becomes inconsistent, preventing the pipeline from recovering from its last known position.",
+      "data_scale_hint": "production streaming pipelines",
+      "likely_hotspot": "checkpoint directory access"
+    }
+  }
 ]
