@@ -181,9 +181,9 @@ def present_and_confirm(state: IncidentState) -> IncidentState:
     incident = candidate
     # print(_SEPARATOR)
     # print(candidates)
-    print(_SEPARATOR)
-    print(incident)
-    print(_SEPARATOR)
+    # print(_SEPARATOR)
+    # print(incident)
+    # print(_SEPARATOR)
 
     severity = incident.get("metadata", {}).get("severity", "unknown")
     tags = incident.get("metadata", {}).get("tags", [])
@@ -411,10 +411,6 @@ def run_pipeline(
         interrupt_payload = result.get("__interrupt__")[0]
         user_input = input(interrupt_payload.value.get("prompt"))
         print(_SEPARATOR)
-        print("pipeline interrupted for user input:")
-        print(result.get("__interrupt__"))
-        print(user_input)
-        print(_SEPARATOR)
         result = pipeline.invoke(Command(resume = user_input), config=config)
     
     print(_SEPARATOR)
@@ -500,7 +496,10 @@ def rag_duplicate_decider_node(state: AddIncidentState) -> AddIncidentState:
         error_text =state["error_message"],
         n_results=5
     )
-    resolution, score = rank_candidates(
+    # print(_SEPARATOR)
+    # print("DUPLUCATE CANDIDATES:", candidates)
+    # print(_SEPARATOR)
+    resolution, score, incident_id = rank_candidates(
         error_text=state["error_message"],
         code_text=state.get("code_context"),
         candidates=candidates

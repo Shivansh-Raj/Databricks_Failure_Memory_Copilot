@@ -259,11 +259,17 @@ def run(args: argparse.Namespace) -> int:
     # Step 7 — Warn if duplicate
     # ------------------------------------------------------------------
     if state.get("duplicate_status") == "duplicate":
-        dup = state.get("duplicate_incident", {})
+        duplicate = state.get("duplicate_incident", {})
+        dup = duplicate.get("document", "")
+        error_message =  dup.split("Error:")[-1].split("Tags:")[0].strip()
+        # severity = duplicate.get("metadata", {}).get("severity", "unknown")
+        # tags = duplicate.get("metadata", {}).get("tags", [])
+        resolution = dup.split("Resolution:")[-1].strip()
+        
         print(f"\n  ⚠  Similar incident already exists (similarity: {state['top_score']*100:.1f}%)")
-        print(f"  ID        : {dup.get('id')}")
-        print(f"  Error     : {dup.get('error_message', '')[:100]}")
-        print(f"  Resolution: {dup.get('resolution', '')[:100]}")
+        print(f"  ID        : {duplicate.get('incident_id')}")
+        print(f"  Error     : {error_message}")
+        print(f"  Resolution: {resolution}")
         answer = input("\n  Add anyway? [y/N]: ").strip().lower()
         if answer != "y":
             print("  Aborted — nothing written.\n")

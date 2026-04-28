@@ -54,7 +54,7 @@ def _next_id(incidents: list[dict]) -> str:
         except (KeyError, IndexError, ValueError):
             pass
         
-        return f"INC-{(max(nums, default=0) + 1):03d}"
+    return f"INC-{(max(nums, default=0) + 1):03d}"
             
 
 # ---------------------------------------------------------------------------
@@ -88,12 +88,6 @@ def load_incidents(path: Path | str | None = None) -> list[dict[str, Any]]:
     if not kb_path.exists():
         raise FileNotFoundError(
             f"Knowledge base not found at {kb_path}. "
-            "Create data/incidents.json or pass an explicit path."
-        )
-
-    if not kb_path.exists():
-        raise FileNotFoundError(
-            f"Knowledge base not found at {kb_path}."
             "Create data/incidents.json or pass an explicit path."
         )
         

@@ -28,9 +28,9 @@ from pathlib import Path
 # Ensure the project root is on the path when running `python app/main.py`
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from app.databricks_client import DatabricksClient, DatabricksConfigError
+# from app.databricks_client import DatabricksClient, DatabricksConfigError
 from app.knowledge_base import load_incidents
-from app.matcher import Matcher
+# from app.matcher import Matcher
 from app.utils import clean_error_text, extract_error_text, format_results
 from config import LOG_LEVEL, MIN_SIMILARITY_THRESHOLD, TOP_N_RESULTS
 
@@ -139,20 +139,21 @@ def run(args: argparse.Namespace) -> int:
     raw_text: str = ""
 
     if args.run_id:
-        logger.info("Fetching run output for run ID: %s", args.run_id)
-        try:
-            # ------------------------------------------------------------------    
-            #  Basically for now The entire databricks_client.py is effectively dead code for you right now.
-            #  Because you are not using the Databricks API.
-            # ------------------------------------------------------------------    
-            client = DatabricksClient()  
-            raw_text = client.get_failed_error_text(args.run_id)
-        except DatabricksConfigError as exc:
-            print(f"\n[CONFIG ERROR] {exc}\n", file=sys.stderr)
-            return 1
-        except Exception as exc:  # noqa: BLE001
-            print(f"\n[API ERROR] {exc}\n", file=sys.stderr)
-            return 1
+        # logger.info("Fetching run output for run ID: %s", args.run_id)
+        # try:
+        #     # ------------------------------------------------------------------    
+        #     #  Basically for now The entire databricks_client.py is effectively dead code for you right now.
+        #     #  Because you are not using the Databricks API.
+        #     # ------------------------------------------------------------------    
+        #     client = DatabricksClient()  
+        #     raw_text = client.get_failed_error_text(args.run_id)
+        # except DatabricksConfigError as exc:
+        #     print(f"\n[CONFIG ERROR] {exc}\n", file=sys.stderr)
+        #     return 1
+        # except Exception as exc:  # noqa: BLE001
+        #     print(f"\n[API ERROR] {exc}\n", file=sys.stderr)
+        #     return 1
+        pass
 
     elif args.error_text:
         raw_text = args.error_text
@@ -226,14 +227,14 @@ def run(args: argparse.Namespace) -> int:
     if state:
         # graph already ran match_node internally — read directly from state
         results = state.get("match_results") or []
-    else:
-        # --no-groq path — run matcher standalone
-        matcher = Matcher(incidents)
-        results = matcher.find_matches(
-            query=error_text,
-            top_n=args.top_n,
-            threshold=args.threshold,
-        )
+    # else:
+    #     # --no-groq path — run matcher standalone
+    #     matcher = Matcher(incidents)
+    #     results = matcher.find_matches(
+    #         query=error_text,
+    #         top_n=args.top_n,
+    #         threshold=args.threshold,
+    #     )
 
     # ------------------------------------------------------------------
     # Step 5 — Output
