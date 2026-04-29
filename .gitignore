@@ -1,4 +1,5 @@
 .env
 .venv
 temp.py
-databricks_client.py
+app/databricks_client.py
+app/data/vector_index

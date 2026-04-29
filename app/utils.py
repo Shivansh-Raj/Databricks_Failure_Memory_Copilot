@@ -124,6 +124,7 @@ def format_results(
     query_text: str,
     confidence: str = "high",
     final_resolution: str | None = None,
+    is_groq_generated: bool = False
 ) -> str:
     """
     Render the top-N match results as a human-readable string.
@@ -176,7 +177,7 @@ def format_results(
 
         lines.append(f"\n  #{rank}  [{confidence_label}]  Similarity: {score_pct:.1f}%")
         lines.append(f"  ID: {inc.get('id', 'N/A')}")
-        lines.append(f"  Matched error:\n    {textwrap.shorten(inc['error_message'], 100, placeholder=' …')}")
+        # lines.append(f"  Matched error:\n    {textwrap.shorten(inc['error_message'], 100, placeholder=' …')}")
         lines.append(f"\n  Resolution:\n{textwrap.indent(textwrap.fill(inc['resolution'], width=72), '    ')}")
         if inc.get("tags"):
             lines.append(f"\n  Tags: {', '.join(inc['tags'])}")

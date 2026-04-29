@@ -29,7 +29,7 @@ class IncidentState(TypedDict):
     resolution:       Optional[str]
 
     # after match
-    # match_results:    Optional[list]
+    match_results:    Optional[list]
     top_score:        Optional[float]
 
     # after match_decider
@@ -222,12 +222,37 @@ def present_and_confirm(state: IncidentState) -> IncidentState:
     user_input = user_input.strip().lower()
     
     if user_input == "y":
-        print(f"\n✅ Accepted resolution from {incident.get('id')}")
+        print(f"\n✅ Accepted resolution from {incident.get('incident_id')}")
+
+        # Normalize the incident shape to match what format_results expects
+        normalized_incident = {
+            "id": incident.get("incident_id"),
+            "resolution": resolution,           # already extracted above via extract_resolution()
+            "tags": tags if isinstance(tags, list) else tags.split(","),
+            "error_message": incident.get("document", ""),
+        }
+
+        results = [
+            {
+                "score": score,             
+                "incident": normalized_incident,
+            }
+        ]
+
+        # formatted = format_results(
+        #     results=results,
+        #     query_text=state.get("error_message", ""),
+        #     confidence="accepted",
+        #     final_resolution=None,
+        # )
+        # print(formatted)
+
         return {
             **state,
-            "final_resolution": incident.get("resolution", ""),
+            "match_results": results,
+            "final_resolution": resolution,
             "confidence": "accepted",
-            "current_candidate_index": index
+            "current_candidate_index": index,
         }
 
     elif user_input == "n":
