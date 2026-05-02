@@ -4,7 +4,7 @@ from langgraph import graph
 from app import groq_normalizer
 # from app.matcher import Matcher
 # from app.knowledge_base import load_incidents, add_incident
-from rag.retriever import retrieve_candidates
+from .rag.retriever import retrieve_candidates
 from app.rag.rag_ranker import rank_candidates
 from app.utils import _SEPARATOR
 

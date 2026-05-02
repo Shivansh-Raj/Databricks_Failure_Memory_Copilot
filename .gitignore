@@ -3,3 +3,6 @@
 temp.py
 app/databricks_client.py
 app/data/vector_index
+error.log
+code.py
+resolution.txt
