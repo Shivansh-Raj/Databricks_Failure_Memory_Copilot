@@ -5,7 +5,9 @@ from pathlib import Path
 vector_db_path = (Path(__file__).parent.parent.parent / "data" / "vector_index").resolve()
 vector_db_path.mkdir(parents=True, exist_ok=True)
 
-client = None
+client = chromadb.PersistentClient(
+            path = str(vector_db_path)
+        )
 collection = None
 
 def get_collection():
@@ -16,10 +18,10 @@ def get_collection():
         #         persistent_directory = str(vector_db_path),
         #         anonymized_telemetry=False        
         #     )
+        # # )
+        # client = chromadb.PersistentClient(
+        #     path = str(vector_db_path)
         # )
-        client = chromadb.PersistentClient(
-            path = str(vector_db_path)
-        )
         
         collection = client.get_or_create_collection(
             name = "incidents_collection"

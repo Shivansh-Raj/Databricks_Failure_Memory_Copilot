@@ -92,9 +92,9 @@ def normalize_resolution_node(state: IncidentState) -> IncidentState:
 #     }
     
 def retrieve_candidates_node(state: IncidentState) -> IncidentState:
-    print(_SEPARATOR)
-    print("retrieve_candidates_node running")
-    print(_SEPARATOR)
+    ## print(_SEPARATOR)
+    ## print("retrieve_candidates_node running")
+    ## print(_SEPARATOR)
 
     candidates = retrieve_candidates(
         error_text=state["error_message"],
@@ -111,9 +111,9 @@ def retrieve_candidates_node(state: IncidentState) -> IncidentState:
 
 
 def rag_rank_candidates_node(state: IncidentState) -> IncidentState:
-    print(_SEPARATOR)
-    print("rag_rank_candidates_node running")
-    print(_SEPARATOR)
+    ## print(_SEPARATOR)
+    ## print("rag_rank_candidates_node running")
+    ## print(_SEPARATOR)
     
     resolution, score, best_id = rank_candidates(
         error_text=state["error_message"],
@@ -147,17 +147,17 @@ def rag_rank_candidates_node(state: IncidentState) -> IncidentState:
 
 def match_decider_node(state: IncidentState) -> IncidentState:
 
-    print("\n----------------------- match_decider_node running ")
+    ## print("\n----------------------- match_decider_node running ")
     score = state.get("top_score", 0.0)
-    print(f"\n----------------------- match_decider_node running with confidence {score}")
+    ## print(f"\n----------------------- match_decider_node running with confidence {score}")
     if float(score) >= 0.6:
-        print("----------------------- high confidence match")
+        ## print("----------------------- high confidence match")
         return {
             **state,
             "confidence": "high"
         }
     else:
-        print("----------------------- low confidence match — routing to groq_suggest")
+        ## print("----------------------- low confidence match — routing to groq_suggest")
         return {
             **state,
             "confidence": "low"
@@ -168,9 +168,9 @@ def present_and_confirm(state: IncidentState) -> IncidentState:
     index = state.get("current_candidate_index", 0)
     
     if index >= len(candidates):
-        print(_SEPARATOR)
-        print("No more candidates to confirm")
-        print(_SEPARATOR)
+        ## print(_SEPARATOR)
+        ## print("No more candidates to confirm")
+        ## print(_SEPARATOR)
         return {
             **state,
             "confidence": "low",
@@ -199,17 +199,17 @@ def present_and_confirm(state: IncidentState) -> IncidentState:
 
     resolution = extract_resolution(incident.get("document", ""))
 
-    print(_SEPARATOR)
-    print(f"📋 MATCH {index + 1} of {len(candidates)}")
-    print(f"   Incident ID : {incident['incident_id']}")
-    print(f"   Confidence  : {score:.2f}")
-    print(f"   Severity    : {severity}")
-    print(f"   Tags        : {', '.join(tags) if isinstance(tags, list) else tags}")
-    print(f"\n   RESOLUTION:\n   {resolution}")
-    print(_SEPARATOR)
+    ## print(_SEPARATOR)
+    ## print(f"📋 MATCH {index + 1} of {len(candidates)}")
+    ## print(f"   Incident ID : {incident['incident_id']}")
+    ## print(f"   Confidence  : {score:.2f}")
+    ## print(f"   Severity    : {severity}")
+    ## print(f"   Tags        : {', '.join(tags) if isinstance(tags, list) else tags}")
+    ## print(f"\n   RESOLUTION:\n   {resolution}")
+    ## print(_SEPARATOR)
     
-    if score < 0.4:
-        print(f"\n⚠️  Low confidence match ({score:.2f}).")
+    # if score < 0.4:
+    #     print(f"\n⚠️  Low confidence match ({score:.2f}).")
 
     # Interrupt and wait for user's input
     user_input = interrupt({
@@ -222,7 +222,7 @@ def present_and_confirm(state: IncidentState) -> IncidentState:
     user_input = user_input.strip().lower()
     
     if user_input == "y":
-        print(f"\n✅ Accepted resolution from {incident.get('incident_id')}")
+        ## print(f"\n✅ Accepted resolution from {incident.get('incident_id')}")
 
         # Normalize the incident shape to match what format_results expects
         normalized_incident = {
@@ -256,7 +256,7 @@ def present_and_confirm(state: IncidentState) -> IncidentState:
         }
 
     elif user_input == "n":
-        print(f"\n Skipping to next match...")
+        ## print(f"\n Skipping to next match...")
         return {
             **state,
             "current_candidate_index": index + 1,
@@ -264,7 +264,7 @@ def present_and_confirm(state: IncidentState) -> IncidentState:
         }
 
     elif user_input == "g":
-        print(f"\n Routing to Groq suggestion...")
+        ## print(f"\n Routing to Groq suggestion...")
         return {
             **state,
             "confidence": "low",
@@ -272,7 +272,7 @@ def present_and_confirm(state: IncidentState) -> IncidentState:
         }
 
     elif user_input == "q":
-        print(f"\n Exiting pipeline.")
+        ## print(f"\n Exiting pipeline.")
         return {
             **state,
             "final_resolution": "Exited pipeline.",
@@ -280,7 +280,7 @@ def present_and_confirm(state: IncidentState) -> IncidentState:
         }
 
     else:
-        print("\n Invalid input. Please enter y / n / g / q")
+        ## print("\n Invalid input. Please enter y / n / g / q")
         return {
             **state,
             "current_candidate_index": index,
@@ -305,24 +305,24 @@ Based on the error and code context provided, suggest a resolution.
 Return only plain text — no JSON, no markdown."""
 
 def groq_suggest_node(state: IncidentState) -> IncidentState:
-    print(_SEPARATOR)
-    print("Running GROQ Suggest node")
-    print(_SEPARATOR)
-    final = "No suggestion available — review error manually.---------------------------------------"
+    final = "No suggestion available — review error manually."
     try:
-        user_content = f"ERROR:\n{state['error_message']}"
+        # Pass both raw and normalized error for full context
+        user_content = f"RAW INPUT:\n{state['raw_error']}"
+        
+        if state.get("raw_code"):
+            user_content += f"\n\nCODE PROVIDED BY ENGINEER:\n{state['raw_code']}"
+        
+        user_content += f"\n\nNORMALIZED ERROR:\n{state['error_message']}"
+        
         if state.get("code_context"):
             ctx = state["code_context"]
             user_content += f"\n\nCODE PATTERN: {ctx.get('pattern')}"
-            user_content += f"\nHOTSPOT: {ctx.get('likely_hotspot')}"
+            user_content += f"\nLIKELY HOTSPOT: {ctx.get('likely_hotspot')}"
 
         suggestion = groq_normalizer._call_groq(SUGGEST_PROMPT, user_content)
-        # print("------------------------------------------")
-        # print(suggestion)
-        # print("------------------------------------------")
         final = suggestion.strip()
     except Exception as e:
-        # logger.warning("groq_suggest failed: %s", e)
         final = "No suggestion available — review error manually."
 
     return {**state, "final_resolution": final}
@@ -431,17 +431,17 @@ def run_pipeline(
     
     while result.get("__interrupt__"):
         
-        print(_SEPARATOR)
-        print("pipeline interrupted for user input:")
+        ## print(_SEPARATOR)
+        ## print("pipeline interrupted for user input:")
         interrupt_payload = result.get("__interrupt__")[0]
         user_input = input(interrupt_payload.value.get("prompt"))
-        print(_SEPARATOR)
+        ## print(_SEPARATOR)
         result = pipeline.invoke(Command(resume = user_input), config=config)
     
-    print(_SEPARATOR)
-    print("🏁 FINAL RESOLUTION:")
-    print(result.get("final_resolution", "No resolution found."))
-    print(_SEPARATOR)
+    ## print(_SEPARATOR)
+    ## print("🏁 FINAL RESOLUTION:")
+    ## print(result.get("final_resolution", "No resolution found."))
+    ## print(_SEPARATOR)
     
     return result
 
@@ -547,8 +547,8 @@ def rag_duplicate_decider_node(state: AddIncidentState) -> AddIncidentState:
     }
     
 def warn_duplicate_node(state: AddIncidentState) -> AddIncidentState:
-    print("\n  Incident not added — too similar to existing record.")
-    print("  Use --force to override and add anyway.\n")
+    ## print("\n  Incident not added — too similar to existing record.")
+    ## print("  Use --force to override and add anyway.\n")
     return {**state, "written_id": None}
 
 def _route_after_duplicate_decider(state: AddIncidentState) -> str:

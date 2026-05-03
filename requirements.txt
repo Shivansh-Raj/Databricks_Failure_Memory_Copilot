@@ -33,3 +33,7 @@ langchain-groq
 fastapi
 uvicorn
 streamlit
+
+# For image extraction
+pytesseract
+Pillow

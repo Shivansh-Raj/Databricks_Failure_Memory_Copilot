@@ -1,8 +1,15 @@
 import uuid
 import os
 import sys
-from click import Command
-from fastapi import HTTPException
+from langgraph.types import Command
+from fastapi import HTTPException, UploadFile, File 
+from typing import List
+
+
+import traceback
+
+# Command to run uvicorn server
+# uvicorn server.main:app --reload --port 8000      
 
 sys.path.append(
     os.path.abspath(
@@ -43,14 +50,14 @@ _sessions : dict[str, dict] = {}
 
 
 def get_pipeline():
-    from app.graph import run_pipeline
+    from app.graph import pipeline
     
-    return run_pipeline
+    return pipeline
 
-def _extract_interrupt(interrupt_payload: dict, retrieved_candidates: list, index: int) -> dict:
+def _extract_interrupt(result) -> Optional[dict]:
     interrupts = result.get("__interrupt__")
     if interrupts:
-        return interrupts[0].value          
+        return interrupts[0].value
     return None
  
 def _format_candidate(interrupt_payload: dict, retrieved_candidates: list, index: int) -> dict:
@@ -77,8 +84,7 @@ def _extract_resolution_from_doc(document: str) -> str:
         if line.strip().startswith("Resolution:"):
             return line.split("Resolution:", 1)[-1].strip()
     return "Not available"
-    
-
+        
 @app.post("/analyze")
 def analyze(request: AnalyzeRequest):
     pipeline = get_pipeline()
@@ -103,9 +109,18 @@ def analyze(request: AnalyzeRequest):
     }
     
     try:
-        result = pipeline.invoke(config=config, state=initial_state)
+        result = pipeline.invoke(initial_state, config=config)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Pipeline error: {str(e)}")
+        # Returns full traceback as JSON — not a 500
+        return {
+            "session_id":       None,
+            "status":           "error",
+            "error":            str(e),
+            "traceback":        traceback.format_exc(),
+            "final_resolution": None,
+            "candidate":        None,
+        }
+
     
     interrupt_payload = _extract_interrupt(result)
     
@@ -130,45 +145,50 @@ def analyze(request: AnalyzeRequest):
         "status":     "awaiting_input",
         "candidate":  _format_candidate(interrupt_payload, candidates, index),
     }
-    
+
 @app.post("/respond")
-def respond(request: RespondRequest):
-    session = _sessions.get(request.session_id)
+def respond(req: RespondRequest):
+    session = _sessions.get(req.session_id)
     if not session:
-        raise HTTPException(status_code=404, detail="Session not found")
-    
+        raise HTTPException(status_code=404, detail="Session not found or already resolved.")
+
     pipeline = get_pipeline()
-    config = session["config"]
-    choice = request.choice.strip().lower()
-    
+    config   = session["config"]
+    choice   = req.choice.strip().lower()
+
     if choice not in ("y", "n", "g", "q"):
         raise HTTPException(status_code=400, detail="Invalid choice. Use: y | n | g | q")
-    
+
     try:
-        result = pipeline.invoke(Command(resume = choice), config=config)
+        result = pipeline.invoke(Command(resume=choice), config=config)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Pipeline error: {str(e)}")
-    
+        # Return full traceback as JSON instead of 500
+        return {
+            "session_id":       req.session_id,
+            "status":           "error",
+            "error":            str(e),
+            "traceback":        traceback.format_exc(),
+            "final_resolution": None,
+            "candidate":        None,
+        }
+
     interrupt_payload = _extract_interrupt(result)
-    
-    
+
     if interrupt_payload:
         candidates = result.get("retrieved_candidates") or []
         index      = result.get("current_candidate_index", 0)
-        
         return {
-            "session_id": request.session_id,
+            "session_id": req.session_id,
             "status":     "awaiting_input",
             "candidate":  _format_candidate(interrupt_payload, candidates, index),
-        }  
-    
-    _sessions.pop(request.session_id, None)
-    
+        }
+
+    _sessions.pop(req.session_id, None)
     return {
-        "session_id": request.session_id,
-        "status":     "resolved",
+        "session_id":       req.session_id,
+        "status":           "resolved",
         "final_resolution": result.get("final_resolution", "No resolution found."),
-        "candidate": None
+        "candidate":        None,
     }
     
 @app.get("/status/{session_id}")
@@ -182,3 +202,43 @@ def status(session_id: str):
 def health():
     return {"status": "ok"}
  
+@app.post("/extract")
+async def extract(files: List[UploadFile] = File(...)): 
+    """
+    Accepts 1 or 2 screenshot files.
+    Returns extracted and separated error_text and code_text.
+    """
+    from server.ocr_extractor import process_screenshots
+    
+    if len(files) == 0:
+        raise HTTPException(status_code=400, detail="No files uploaded.")
+    if len(files) > 2:
+        raise HTTPException(status_code=400, detail="Maximum 2 screenshots allowed.")
+
+    allowed_types = {"image/png", "image/jpeg", "image/jpg", "image/webp"}
+    for f in files:
+        if f.content_type not in allowed_types:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid file type: {f.content_type}. Only PNG, JPG, WEBP allowed."
+            )    
+            
+    try:
+        image_byte = [await f.read() for f in files]
+        result = process_screenshots(image_byte)
+        # print("_______________________________")
+        # print(result)
+        # print("_______________________________")
+        return {
+            "status" : "Success",
+            "error_text": result.get("error_text", ""),
+            "code_text":  result.get("code_text",  ""),
+            "warning":    result.get("warning"),
+        }
+    except Exception as e:
+        import traceback
+        return {
+            "status":    "error",
+            "error":     str(e),
+            "traceback": traceback.format_exc(),
+        }

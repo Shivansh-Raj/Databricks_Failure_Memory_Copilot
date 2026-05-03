@@ -92,8 +92,8 @@ def rank_candidates(error_text: str, code_text:str = None, candidates = []):
         return parsed.get("resolution"), confidence, parsed.get("incident_id")
     
     except Exception as e:
-        print(f"__________________________________________________")
-        print(f"Error occurred while ranking candidates: {e}")
-        print(context_block)
-        print(f"__________________________________________________")
+        ## print(f"__________________________________________________")
+        ## print(f"Error occurred while ranking candidates: {e}")
+        ## print(context_block)
+        ## print(f"__________________________________________________")
         return None, 0.0, None
