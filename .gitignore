@@ -6,4 +6,4 @@ app/data/vector_index
 error.log
 code.py
 resolution.txt
-_pycache_
+__pycache__
