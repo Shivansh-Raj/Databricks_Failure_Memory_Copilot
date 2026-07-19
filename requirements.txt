@@ -27,7 +27,7 @@ python-certifi-win32
 chromadb
 sentence-transformers
 langgraph
-langchain-groq
+# langchain-groq
 
 # For UI
 fastapi
