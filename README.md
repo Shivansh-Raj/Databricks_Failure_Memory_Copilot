@@ -1,6 +1,6 @@
-# 🔥 Databricks Failure Memory Copilot
+# 🔥 Failure Memory Copilot
 
-An intelligent failure analysis system that matches incoming Databricks and Apache Spark errors against a historical knowledge base of incidents to surface relevant resolutions. When no strong match is found, it falls back to LLM-powered suggestions via Groq.
+An intelligent failure memory system that transforms recurring software failures into searchable organizational knowledge. It normalizes incoming error logs, retrieves the most relevant historical resolutions using semantic search, and falls back to LLM-powered suggestions via Groq whenever no confident match is found.
 
 ---
 
@@ -25,8 +25,7 @@ An intelligent failure analysis system that matches incoming Databricks and Apac
 
 ## Overview
 
-When a Databricks job fails, engineers often spend time diagnosing the same types of errors that have already been resolved before. This copilot acts as **organizational memory** — it normalizes incoming errors using an LLM, retrieves the most similar past incidents via semantic search (RAG), and presents ranked resolutions through an interactive review loop.
-
+Software failures often repeat across applications, yet engineers spend valuable time rediscovering solutions to issues that have already been resolved. Failure Memory Copilot acts as an **organizational memory** by normalizing raw error logs with an LLM, retrieving the most relevant historical incidents through semantic search (RAG), and presenting ranked resolutions in an interactive human-in-the-loop review workflow. When no suitable historical match exists, it generates context-aware suggestions using Groq.
 ---
 
 ## Architecture
@@ -174,9 +173,6 @@ Create a `.env` file in the project root:
 ```env
 GROQ_API_KEY=gsk_your_api_key_here
 
-# Optional — only needed if using Databricks API directly
-DATABRICKS_HOST=https://adb-<workspace-id>.azuredatabricks.net
-DATABRICKS_TOKEN=dapi_your_token
 ```
 
 ### Build the Vector Index
@@ -312,7 +308,7 @@ All tuneable parameters are centralized in [`config.py`](config.py):
 
 ## Knowledge Base
 
-The knowledge base is stored in [`data/incidents.json`](data/incidents.json) — a curated collection of 12 Databricks/Spark failure incidents covering:
+The knowledge base is stored in [`data/incidents.json`](data/incidents.json) and contains a curated collection of historical software failure incidents used for semantic retrieval and resolution matching. The current knowledge base primarily consists of Databricks and Apache Spark incidents, serving as sample data that demonstrates the system's retrieval and recommendation capabilities.
 
 - **OOM / Memory** — Heap space during shuffle, driver OOM from `.collect()`
 - **DLT Pipelines** — Table not found, circular dependencies, streaming/batch mode mismatch
