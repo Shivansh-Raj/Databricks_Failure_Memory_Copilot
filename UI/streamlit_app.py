@@ -552,7 +552,7 @@ if input_mode == "✏️  Type / Paste":
     error_input = st.text_area(
         label="error",
         label_visibility="collapsed",
-        placeholder="Paste your Databricks / Spark error here...",
+        placeholder="Paste your error log here...",
         height=110,
         key=f"error_input_{cid}",
         value=st.session_state.get(f"extracted_error_{cid}", ""),
